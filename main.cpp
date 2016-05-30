@@ -4,14 +4,12 @@
 #include <stdlib.h>
 #include <time.h>
 
-LRESULT CALLBACK WndProc(HWND hWnd,
+LRESULT CALLBACK WndProc(HWND handle,
                          UINT message,
                          WPARAM wParam,
                          LPARAM lParam);
-WNDCLASSEX wc;
-
-void EnableOpenGL(HWND hWnd, HDC* hDC, HGLRC* hRC);
-void DisableOpenGL(HWND hWnd, HDC hDC, HGLRC hRC);
+void EnableOpenGL(HWND handle, HDC* hDC, HGLRC* hRC);
+void DisableOpenGL(HWND handle, HDC hDC, HGLRC hRC);
 void Display();
 void DrawMap();
 void DrawView(int start_pointX,
@@ -79,67 +77,93 @@ int down_left = 0;
 int left = 0;
 int up_left = 0;
 
+class Window
+{
+public:
+    bool initialize(HINSTANCE& hInstance)
+    {
+        wc.cbSize = sizeof(WNDCLASSEX);
+        wc.style = CS_OWNDC;
+        wc.lpfnWndProc = WndProc;
+        wc.cbClsExtra = 0;
+        wc.cbWndExtra = 0;
+        wc.hInstance = hInstance;
+        wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+        wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+        wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+        wc.lpszMenuName = NULL;
+        wc.lpszClassName = NazwaKlasy;
+        wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+
+        if (!RegisterClassEx(&wc))
+        {
+            MessageBox(NULL,
+                       "Rejestracja okna nie powiodla sie!",
+                       "Register Error",
+                       MB_OK | MB_ICONEXCLAMATION);
+            return false;
+        }
+        // WS_OVERLAPPEDWINDOW WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX / WS_CAPTION |
+        // WS_POPUPWINDOW
+        handle = CreateWindowEx(WS_EX_CLIENTEDGE,
+                                NazwaKlasy,
+                                "GameOfLive",
+                                WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                                CW_USEDEFAULT,
+                                CW_USEDEFAULT,
+                                OKNO.x,
+                                OKNO.y,
+                                NULL,
+                                NULL,
+                                hInstance,
+                                NULL);
+
+        if (handle == NULL)
+        {
+            MessageBox(NULL,
+                       "Proba utworzenia okna nie powiodla sie!",
+                       "Create Error",
+                       MB_ICONEXCLAMATION);
+            return false;
+        }
+        return true;
+    }
+
+    void terminate()
+    {
+        DestroyWindow(handle);
+    }
+
+    HWND& get_handle()
+    {
+        return handle;
+    }
+
+private:
+    WNDCLASSEX wc;
+    HWND handle;
+};
+
 ////////////////////////////////////////////////////
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrievInstance,
                    LPSTR lpCmdLine,
                    int nCmdShow)
 {
-    wc.cbSize = sizeof(WNDCLASSEX);
-    wc.style = CS_OWNDC;
-    wc.lpfnWndProc = WndProc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = hInstance;
-    wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wc.lpszMenuName = NULL;
-    wc.lpszClassName = NazwaKlasy;
-    wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
-
-    if (!RegisterClassEx(&wc))
-    {
-        MessageBox(NULL,
-                   "Rejestracja okna nie powiodla sie!",
-                   "Register Error",
-                   MB_OK | MB_ICONEXCLAMATION);
-        return 1;
-    }
-
-    // WS_OVERLAPPEDWINDOW WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX / WS_CAPTION |
-    // WS_POPUPWINDOW
-    HWND hWnd = CreateWindowEx(WS_EX_CLIENTEDGE,
-                               NazwaKlasy,
-                               "GameOfLive",
-                               WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-                               CW_USEDEFAULT,
-                               CW_USEDEFAULT,
-                               OKNO.x,
-                               OKNO.y,
-                               NULL,
-                               NULL,
-                               hInstance,
-                               NULL);
-
-    if (hWnd == NULL)
-    {
-        MessageBox(NULL,
-                   "Proba utworzenia okna nie powiodla sie!",
-                   "Create Error",
-                   MB_ICONEXCLAMATION);
-        return 1;
-    }
-
+    auto window = Window{};
+    window.initialize(hInstance);
     // timer
-    if (SetTimer(hWnd, ID_TIMER, 10, NULL) == 0)
-        MessageBox(hWnd, "Nie mozna utworzyc timera!", "Blad", MB_ICONSTOP);
+    if (SetTimer(window.get_handle(), ID_TIMER, 10, NULL) == 0)
+        MessageBox(window.get_handle(),
+                   "Nie mozna utworzyc timera!",
+                   "Blad",
+                   MB_ICONSTOP);
 
     // rand seed
     srand(time(NULL));
 
     // enable OpenGL for the window
-    EnableOpenGL(hWnd, &hDC, &hRC);
+    EnableOpenGL(window.get_handle(), &hDC, &hRC);
 
     // program main loop
     while (!quit)
@@ -164,9 +188,9 @@ int WINAPI WinMain(HINSTANCE hInstance,
         }
     }
     // shutdown OpenGL
-    DisableOpenGL(hWnd, hDC, hRC);
+    DisableOpenGL(window.get_handle(), hDC, hRC);
     // destroy the window explicitly
-    DestroyWindow(hWnd);
+    window.terminate();
     return msg.wParam;
 }
 
@@ -288,7 +312,7 @@ void update()
     }
 }
 
-void updateKey(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+void updateKey(HWND handle, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (wParam)
     {
@@ -475,19 +499,22 @@ void updateKey(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         editionMode = !editionMode;
         break;
     }
-    PostMessage(hWnd, WM_SIZE, wParam, lParam);
+    PostMessage(handle, WM_SIZE, wParam, lParam);
 }
 ////////////////////////////////////////////////////
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc(HWND handle,
+                         UINT message,
+                         WPARAM wParam,
+                         LPARAM lParam)
 {
     switch (message)
     {
     case WM_CREATE:
-        PostMessage(hWnd, WM_SIZE, wParam, lParam);
+        PostMessage(handle, WM_SIZE, wParam, lParam);
         return 0;
 
     case WM_CLOSE:
-        DestroyWindow(hWnd);
+        DestroyWindow(handle);
         return 0;
 
     case WM_DESTROY:
@@ -499,7 +526,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_KEYDOWN:
-        updateKey(hWnd, message, wParam, lParam);
+        updateKey(handle, message, wParam, lParam);
         return 0;
 
     case WM_SIZE:
@@ -532,19 +559,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         return 0;
 
     default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
+        return DefWindowProc(handle, message, wParam, lParam);
     }
 }
 
 ////////////////////////////////////////////////////
 // Enable OpenGL
-void EnableOpenGL(HWND hWnd, HDC* hDC, HGLRC* hRC)
+void EnableOpenGL(HWND handle, HDC* hDC, HGLRC* hRC)
 {
     PIXELFORMATDESCRIPTOR pfd;
     int format;
 
     // get the device context (DC)
-    *hDC = GetDC(hWnd);
+    *hDC = GetDC(handle);
 
     // set the pixel format for the DC
     ZeroMemory(&pfd, sizeof(pfd));
@@ -579,13 +606,13 @@ void EnableOpenGL(HWND hWnd, HDC* hDC, HGLRC* hRC)
 
 ////////////////////////////////////////////////////
 // Disable OpenGL
-void DisableOpenGL(HWND hWnd, HDC hDC, HGLRC hRC)
+void DisableOpenGL(HWND handle, HDC hDC, HGLRC hRC)
 {
     USEcolor = NULL;
     NOTUSEcolor = NULL;
     wglMakeCurrent(NULL, NULL);
     wglDeleteContext(hRC);
-    ReleaseDC(hWnd, hDC);
+    ReleaseDC(handle, hDC);
 }
 
 ////////////////////////////////////////////////////
