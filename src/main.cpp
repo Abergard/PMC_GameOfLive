@@ -43,7 +43,7 @@ struct ROZMIAR
 } OKNO = {600, 600};
 ////////////////////////////////////////////////////
 
-LPSTR NazwaKlasy = "GL tutorial";
+const char* NazwaKlasy = "GL tutorial";
 MSG msg;
 HWND g_hWnd;
 HDC hDC;
@@ -654,14 +654,12 @@ void DrawMap()
         for (int y = 980; y >= -1000; y -= 20)
         {
             if (USEcolor[nrArea] == 0)
+            {
                 DrawView(x, y, 0.9f, 0.9f, 0.9f, GL_LINE, 0.6);
+            }
             else
             {
-                float color;
-                if (USEcolor[nrArea] == 1)
-                    color = 0;
-
-                DrawView(x, y, color, color, color, GL_FILL, 0.6);
+                DrawView(x, y, 0.f, 0.f, 0.f, GL_FILL, 0.6);
             }
             ++nrArea;
         }
