@@ -1,4 +1,6 @@
 # PMC_GameOfLive
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Pimp my code - Game Of Live old school project
 
 ## The base idea of PimpMyCode
