@@ -476,6 +476,7 @@ void updateKey(HWND handle, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
     case VK_ADD:
+    case VK_OEM_PLUS:
         if (bCONTROL)
         {
             if (ZOOM > -20)
@@ -484,6 +485,7 @@ void updateKey(HWND handle, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
     case VK_SUBTRACT:
+    case VK_OEM_MINUS:
         if (bCONTROL)
         {
             if (ZOOM < 1000)
