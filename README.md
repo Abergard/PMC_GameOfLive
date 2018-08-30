@@ -1,5 +1,6 @@
 # PMC_GameOfLive
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![ready](https://img.shields.io/badge/ready-1%25-lightgrey.svg)](https://github.com/Abergard/PMC_GameOfLive/tree/pmc)
 
 Pimp my code - Game Of Live old school project
 
